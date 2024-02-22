@@ -52,6 +52,14 @@ def get_simple_W(L: int, theta: float) -> np.ndarray:
     )
 
 def normalize(psi: np.ndarray) -> np.ndarray:
+    """Normalize vector (using Frobenius norm).
+
+    Args:
+        psi (np.ndarray): state to normalize
+
+    Returns:
+        np.ndarray: normalized state
+    """
     return psi/np.linalg.norm(psi)
 
 def gaussian_packet(L: int, x0: int = 0, sigma: float = 1):
@@ -59,12 +67,39 @@ def gaussian_packet(L: int, x0: int = 0, sigma: float = 1):
     psi = np.exp(-1/2*((x-x0)/sigma)**2)
     return normalize(psi)
 
-def plane_wave(L: int, k: float):
+def plane_wave(L: int, k: float) -> np.ndarray:
+    """Prepare a plane wave state with momentum k over a chain of size 2L.
+
+    In equation, the state (up to normalization) is 
+
+        psi(x) = e^{-ikx}
+    
+    Periodic boundary conditions are preserved if k = pi/L * n for some integer n. 
+
+    Args:
+        L (int): the chain has size 2L
+        k (float): momentum
+
+    Returns:
+        np.ndarray: normalized plane wave
+    """
     x = np.arange(-L, L)
     psi = np.exp(-1j*k*x)
     return normalize(psi)
 
-def delta_V(L:int, chi: float):
+def delta_V(L:int, chi: float) -> np.ndarray:
+    """Periodic delta potential, localized at x=0 and x=-L (x=-L+1) when L is even (odd), with form
+    
+    V = [[1, 0], 
+         [0, exp(i*chi)]]
+
+    Args:
+        L (int): the chain has size 2
+        chi (float): phase kick
+
+    Returns:
+        ndarray: potential matrix
+    """
     V = np.eye(2*(2*L), dtype=complex)
     V[3*L, 3*L] = np.exp(1j*chi)
     if L%2 == 0:
