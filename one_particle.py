@@ -40,16 +40,22 @@ def get_translation(L: int, k: int = 1) -> np.ndarray:
         T = T.transpose()
     return T
 
-def get_simple_W(L: int, theta: float) -> np.ndarray:
-    T1 = get_translation(L=L, k=1)
-    T2 = get_translation(L=L, k=2)
-    alpha = np.cos(theta)
-    beta = np.sin(theta)
-    return np.block(
-        [[alpha*T2, 1j*beta*T1],
-         [1j*beta*T1.T, alpha*T2.T]
-        ]
-    )
+def get_W_from_blocks(d:int, blocks: dict[(int, int): np.ndarray]):
+    """Init a walker unitary, W, for a walker with internal dof of size d. W is a block matrix, whose blocks are specified by blocks_W. This should be a dictionary mapping 
+
+            (i, j) -> W_{ij} for i,j in [d]x[d]
+
+        If an entry is skipped, it is assumed that that block is made out of zeros.
+    """
+    assert all(np.array(list(blocks)).flatten() < d)
+    shape = next(iter(blocks.values())).shape
+    assert all([block.shape == shape for block in blocks.values()])
+    zeros = np.zeros(shape)
+    W = np.block(
+            [[blocks[i,j] if (i, j) in blocks else zeros for j in range(d)] 
+             for i in range(d)]
+        )
+    return W
 
 def normalize(psi: np.ndarray) -> np.ndarray:
     """Normalize vector (using Frobenius norm).
@@ -60,7 +66,11 @@ def normalize(psi: np.ndarray) -> np.ndarray:
     Returns:
         np.ndarray: normalized state
     """
-    return psi/np.linalg.norm(psi)
+    norm = np.linalg.norm(psi)
+    if norm != 0:
+        return psi/np.linalg.norm(psi)
+    else:
+        raise ValueError('Vector has zero norm')
 
 def gaussian_packet(L: int, x0: int = 0, sigma: float = 1):
     x = np.arange(-L, L)
@@ -87,27 +97,6 @@ def plane_wave(L: int, k: float) -> np.ndarray:
     psi = np.exp(-1j*k*x)
     return normalize(psi)
 
-def delta_V(L:int, chi: float) -> np.ndarray:
-    """Periodic delta potential, localized at x=0 and x=-L (x=-L+1) when L is even (odd), with form
-    
-    V = [[1, 0], 
-         [0, exp(i*chi)]]
-
-    Args:
-        L (int): the chain has size 2
-        chi (float): phase kick
-
-    Returns:
-        ndarray: potential matrix
-    """
-    V = np.eye(2*(2*L), dtype=complex)
-    V[3*L, 3*L] = np.exp(1j*chi)
-    if L%2 == 0:
-        V[2*L, 2*L] = np.exp(-1j*chi)
-    else: 
-        V[2*L+1, 2*L+1] = np.exp(-1j*chi)
-    return V
-
 def localized_particle(
         L: int, 
         k: float, 
@@ -117,3 +106,12 @@ def localized_particle(
     x = np.arange(-L, L)
     psi = np.exp(-1j*k*x)*np.exp(-1/2*((x-x0)/sigma)**2)
     return normalize(psi)
+
+def shift(v, n):
+    n = n % len(v)
+    if n == 0:
+        return v
+    vp = np.empty_like(v)
+    vp[:n] = v[-n:]
+    vp[n:] = v[:-n]
+    return vp

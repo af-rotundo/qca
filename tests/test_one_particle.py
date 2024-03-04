@@ -5,6 +5,7 @@ from one_particle import *
 
 N_RAND = 5
 L_MAX = 100
+D_MAX = 5
 
 @pytest.mark.parametrize("execution_number", range(N_RAND))
 def test_get_basis_el(execution_number):
@@ -29,3 +30,25 @@ def test_get_translation(execution_number):
     T2 = get_translation(L=L, k=-k)
     assert np.allclose(T2, T.T.conjugate())
 
+@pytest.mark.parametrize("execution_number", range(N_RAND))
+def test_get_W_from_blocks(execution_number):
+    d = random.randint(2, D_MAX)
+    L = random.randint(1, L_MAX)
+    blocks = {(i, i): np.eye(L) for i in range(d)}
+    W = get_W_from_blocks(d, blocks)
+    assert np.allclose(W, np.eye(d*L))
+    X = np.zeros((L, L))
+    i,j = random.randint(0, L-1), random.randint(0, L-1)
+    X[i,j] = 1
+    blocks = {(0,1): X}
+    W = get_W_from_blocks(d, blocks)
+    assert W[i, j+L] == 1
+    for _ in range(10):
+        k,l = random.randint(0, d-1), random.randint(0, d-1)
+        if k != i or l != j+L:
+            assert W[k, l] == 0
+
+
+
+            
+                    

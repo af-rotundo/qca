@@ -3,55 +3,106 @@ import numpy as np
 import random
 
 from qca import *
-from one_particle import get_translation, plane_wave, normalize, delta_V
+from one_particle import *
 
 N_RAND = 5
+L_MAX = 20
+STEPS_MAX = 10
+EPS = 1e-9
+
+@pytest.mark.parametrize("execution_number", range(N_RAND)) 
+def test_get_simple_W(execution_number):
+    L = random.randint(1, L_MAX)
+    theta = 2*np.pi*random.random()
+    T1 = get_translation(L=L, k=1)
+    T2 = get_translation(L=L, k=2)
+    alpha = np.cos(theta)
+    beta = np.sin(theta)
+    W_corr = np.block(
+        [[alpha*T2, 1j*beta*T1],
+         [1j*beta*T1.T, alpha*T2.T]
+        ])
+    W = SimpleQW._get_simple_W(L, theta)
+    assert np.allclose(W, W_corr)
 
 @pytest.mark.parametrize("execution_number", range(N_RAND))
-def test_simple_qca(execution_number):
-    # we consider a simple QW of a spin 1/2 particle with 
-    # W = [[T^2, 0], [0, T^{-2}]]
-    # and a (periodic) potential localized at x=0 and x=-L (x=-L+1) when L is even (odd), with form
-    # V = [[1, 0], [0, exp(i*chi)]]
-    L = 2*random.randint(2, 50)
-    d = 2
-    dk = np.pi/L
-    T2 = get_translation(L=L, k=2)
-    blocks_w = {(0,0): T2, (1,1): T2.T}
-    c = np.random.rand(4) + 1j*np.random.rand(4)
+def test_get_gp(execution_number):
+    k = np.pi/2*random.random()
+    alpha = random.random() 
+    sign = random.choice([1, -1])
+    gp1 = SimpleQW.get_gp(sign, k, alpha)
+    gp2 = SimpleQW.get_gp(sign, k+sign*np.pi, alpha)
+    assert  np.allclose(gp1, -gp2)
+
+@pytest.mark.parametrize("execution_number", range(N_RAND))
+def test_shift(execution_number):
+    L = random.randint(1, L_MAX)
+    print('L', L)
+    v = np.random.rand(L)
+    print(v)
+    s = random.randint(-STEPS_MAX,STEPS_MAX)
+    vp = shift(v, s)
+    vc = np.array([v[(i-s)%L] for i in range(L)])
+    assert np.allclose(vp, vc)
+
+
+@pytest.mark.parametrize("execution_number", range(N_RAND))
+def test_simple_qw(execution_number):
+    # we test that eigenfun from SimpleQW solves the recursion relations 
+    # consider a random instance of the problem 
+    L = 2*random.randint(2, int(L_MAX/2))
+    phi = 2 * np.pi * random.random()
+    theta = 2 * np.pi * random.random()
+    gamma = 2 * np.pi * random.random()
+    qw = SimpleQW(L=L, theta=theta, phi=phi, gamma=gamma)
+    print('L', L)
     # first we consider the free theory (without V)
     # we build a generic eigenstate with energy omega in [0, pi]
-    k = random.randint(0, L)*dk
-    psi_plus = c[0]*plane_wave(L=L, k=k) + c[1]*plane_wave(L=L, k=k-np.pi)
-    psi_minus = c[2]*plane_wave(L=L, k=-k) + c[3]*plane_wave(L=L, k=np.pi-k)
-    psi = normalize(np.block([psi_plus, psi_minus]))
-    qw = ChainQW(psi=psi, blocks_w=blocks_w, L=L, d=d)
-    for _ in range(3):
-        steps = random.randint(0, L)
-        qw.evolve(steps=steps)
-        psi *= np.exp(2j*steps*k)
-        assert np.allclose(psi, qw.psi)
-    # we introduce a potential 
-    chi = np.pi * random.random()
-    V = delta_V(L=L, chi=chi)
-    # consider generalized free solutions (solutions that don't feel the potential)
-    psi_plus = c[0]*plane_wave(L=L, k=k) + c[1]*plane_wave(L=L, k=k-np.pi)
-    psi_minus = c[2]*plane_wave(L=L, k=-k) - c[2]*plane_wave(L=L, k=np.pi-k)
-    psi = normalize(np.block([psi_plus, psi_minus]))
-    qw = ChainQW(psi=psi, blocks_w=blocks_w, L=L, V=V, d=d)
-    for _ in range(3):
-        steps = random.randint(0, L)
-        qw.evolve(steps=steps)
-        psi *= np.exp(2j*steps*k)
-        assert np.allclose(psi, qw.psi)
-    # finally we consider "interacting" solutions
-    psi_plus = c[0]*plane_wave(L=L, k=k) + c[1]*plane_wave(L=L, k=k-np.pi)
-    x = np.arange(-L, L)
-    psi_minus = np.exp(-1j*chi*np.heaviside(x, 1, where=x%2==0))*(c[2]*np.exp(1j*k*x)+c[3]*np.exp(1j*(k-np.pi)*x))
-    psi = normalize(np.block([psi_plus, psi_minus]))
-    qw = ChainQW(psi=psi, blocks_w=blocks_w, L=L, V=V, d=d)
-    for _ in range(3):
-        steps = random.randint(0, L)
-        qw.evolve(steps=steps)
-        psi *= np.exp(2j*steps*k)
-        assert np.allclose(psi, qw.psi)
+    k = np.pi*random.random()/2
+    ks = [k, -k, k-np.pi, np.pi-k]
+    c = np.random.rand(4) + 1j*np.random.rand(4)
+    print('k', k)
+    qw.psi = qw.eigenfun(sign=1, k=k, c=c)
+    alpha = np.cos(theta)
+    beta = np.sin(theta)
+    c = np.cos(phi)
+    s = np.sin(phi)
+    omega = SimpleQW.get_omega(sign=1, k=k, alpha=alpha)
+    psi_plus = qw.psi[:2*L]
+    psi_minus = qw.psi[2*L:]
+    for x in range(-L+2, L):
+        eq1 = (np.exp(1j*omega)*psi_plus[x_to_index(x, L)]
+            -alpha*psi_plus[x_to_index(x-2, L)]
+            -1j*beta*psi_minus[x_to_index(x-1, L)])
+        if x == 1:
+            diff = np.abs(eq1 - 1j*beta*(
+                    1j*s*np.exp(1j*gamma)*psi_plus[x_to_index(0, L)]
+                    +(c-1)*psi_minus[x_to_index(0, L)]))
+            if diff > EPS:
+                print(f'x=1, diff = {diff}')
+        elif x== 2:
+            diff = np.abs(eq1 - alpha*(
+                    (c-1)*psi_plus[x_to_index(0, L)]
+                    +1j*0*np.exp(-1j*gamma)*psi_minus[x_to_index(0, L)]))
+            if diff > EPS:
+                print(f'x=2, diff = {diff}')
+        else:
+            assert np.abs(eq1) < EPS, f"x = {x}, eq1 = {eq1}"
+    for x in range(-L, L-2):
+        eq2 = (np.exp(1j*omega)*psi_minus[x_to_index(x, L)]
+            -alpha*psi_minus[x_to_index(x+2, L)]
+            -1j*beta*psi_plus[x_to_index(x+1, L)])
+        if x == -1:
+            diff = np.abs(eq2 - 1j*beta*(
+                    (c-1)*psi_plus[x_to_index(0, L)]
+                    +1j*s*np.exp(-1j*gamma)*psi_minus[x_to_index(0, L)]))
+            if diff > EPS:
+                print(f'x=-1, diff = {diff}')
+        elif x== -2:
+            diff = np.abs(eq2 - alpha*(
+                    1j*s*np.exp(1j*gamma)*psi_plus[x_to_index(0, L)]
+                    +(c-1)*psi_minus[x_to_index(0, L)]))
+            if diff > EPS:
+                print(f'x=-2, diff = {diff}')
+        else:
+            assert np.abs(eq2) < EPS, f"x = {x}, eq1 = {eq2}"
