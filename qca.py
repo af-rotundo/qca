@@ -37,6 +37,10 @@ class ChainQW(QCA):
     The position x goes from -L to L-1. The walk is given by 
         U = WV
     where W is the free propagation and V is an optional interaction term.
+
+    The order of the tensor factor is 
+        H_int x H_x 
+    where H_int is the internal dof Hilbert space and H_x is the position Hilbert space.
     """
     def __init__(
         self,
@@ -57,9 +61,10 @@ class ChainQW(QCA):
         Args:
             L (int): the chain has length 2L
             psi (np.ndarray): state of the QW
-            blocks_w (dict[(int, int): np.ndarray]): non zero blocks in the free propagation
+            W (np.ndarray): the free walk unitary
             V (np.ndarray | None, optional): potential. Defaults to None.
             d (int, optional): size of the internal dof Hilbert space. Defaults to 2.
+            psi (np.ndarray | None): internal state of the walker. Defaults to None.
         """
         if V is None:
             U = W
@@ -84,14 +89,18 @@ class ChainQW(QCA):
         i_minus = 2*self.L + i_plus
         return np.abs(self.psi[i_plus])**2 + np.abs(self.psi[i_minus])**2
     
-    def plot_x(self) -> plt.plot:
+    def plot_x(self, x_min: int | None = None, x_max: int | None = None) -> plt.plot:
         """Plot the probability of finding the walker at different positions of the chain.
 
         Returns:
             plt.plot: plot of the position probability
         """
-        ps = [self.p_x(x) for x in range(-self.L, self.L)]
-        return plt.plot(range(-self.L, self.L), ps)
+        if x_min == None:
+            x_min = -self.L
+        if x_max == None:
+            x_max = self.L
+        ps = [self.p_x(x) for x in range(x_min, x_max)]
+        return plt.plot(range(x_min, x_max), ps)
 
 def x_to_index(x: int, L: int) -> int:
     """Convert a position x along a chain of size 2L with x=-L, ..., L-1 to the corresponding index in the vector representation of the walker state, i=0, ..., 2L-1.
@@ -125,7 +134,7 @@ class SimpleQW(ChainQW):
             gamma: float, 
             psi: np.ndarray | None = None
         ):
-        """Generate a quantum walker on a line with internal dof of dimension 2. The walker unitary is given by 
+        """Generate a quantum walker on a circle with internal dof of dimension 2. The walker unitary is given by 
 
             W = [[alpha T^2, i*beta*T, 
                  [i*betaT^{-1}, alpha T^{-2}]]
@@ -135,12 +144,12 @@ class SimpleQW(ChainQW):
             V = [[c,    i*s*e^{-i*gamma}], 
                  [i*s*e^{i*gamma},  c]]
         
-        where c = cos(phi), s = sin(phi).
+        where c = cos(phi), s = sin(phi). 
 
     Args:
         L (int): the chain has size 2
-        theta (float): determines relative weight of diagonal and off-diagonal terms in W
-        chi (float): determines relative weight of diagonal and off-diagonal terms in V
+        theta (float): determines relative weight of diagonal and off-diagonal terms in W, through alpha = cos(theta) and beta = sin(theta). 
+        phi (float): determines relative weight of diagonal and off-diagonal terms in V, through c = cos(phi) and s = sin(phi). 
         psi (np.ndarray | None): state of the walker. Defaults to None. 
         """
         W = SimpleQW._get_simple_W(L=L, theta=theta)
@@ -165,7 +174,8 @@ class SimpleQW(ChainQW):
             np.ndarray: unnormalized wave function 
         """
         if self.beta != 0:
-            v_int = np.array([1j*self.beta, get_gp(sign, k, self.alpha)])
+            v_int = np.array([1j*self.beta, SimpleQW.get_gp(sign, k, self.alpha)])
+        # the case beta = 0 needs to be taken care separately 
         else:
             if sign == 1:
                 if 0 <= k <= np.pi/2 or  -np.pi <= k <= -np.pi/2:
@@ -184,6 +194,20 @@ class SimpleQW(ChainQW):
         return np.kron(v_int, plane_wave(self.L, k=k))
 
     def eigenfun(self, sign: int, k: float, c: list[np.ndarray]):
+        """Builds an eigenfunction of the interacting theory given for x<0 by a superposition with the 4 degenerate states with momenta k, k-pi, -k, -k+pi. The weights for x>0 are computed from c by solving the junction conditions.
+        
+        The relative weights are determinded by the vector c. The band is determined by sign.
+
+        The solution is valid on the infinite line, boundary effects on the circle spoil it. 
+
+        Args:
+            sign (int): which band to consider
+            k (float): momentum
+            c (list[np.ndarray]): relative weights of the 4 modes with energy equal to omega(k)
+
+        Returns:
+            _type_: unnormalized interacting eigenfunction
+        """
         gp = SimpleQW.get_gp(sign, k, self.alpha)
         gm = SimpleQW.get_gp(sign, -k, self.alpha)
         S = self._generate_S(sign, k, gp, gm)
@@ -206,7 +230,40 @@ class SimpleQW(ChainQW):
         psi_minus_R = (np.exp(-1j*k*xR)*(cp[0]-(-1)**np.abs(xR)*cp[1])*gp
                + np.exp(1j*k*xR)*(cp[2]-(-1)**np.abs(xR)*cp[3])*gm)
         psi_minus = np.concatenate([psi_minus_L, psi_minus_R])
-        return np.concatenate([psi_plus, psi_minus])
+        psi = np.concatenate([psi_plus, psi_minus])
+        return normalize(psi)
+
+    def wave_packet(
+            self, 
+            k0: float, 
+            sigma_k: float, 
+            x0: float, 
+            sign: int
+        ) -> np.ndarray:
+        """Generate a wave packet center at x0, and momentum normally distributed around k0 with std deviation equal to sigma_k.
+
+        The packet is
+
+            |packet> = sum_k g(k) |v_k>
+
+        where |v_k> are eigenfunctions of the free theory, and 
+
+            g(k) = exp(-(k-k0)^2/(2*sigma_k^2)) exp(ix0k)
+
+        The momenta are sampled from [-pi, pi) with a grid of spacing pi/L.
+
+        Args:
+            k0 (float): mean momentum of the packet
+            sigma_k (float): std deviation of momentum
+            x0 (float): mean position
+            sign (int): label bands in the free theory
+
+        Returns:
+            np.ndarray: unnormalized wave packet
+        """
+        ks = np.arange(-self.L, self.L-1)*np.pi/self.L
+        weights = np.exp(-(ks-k0)**2/(2*sigma_k**2)) * np.exp(1j*x0*ks)
+        return sum([weights[i] * self.free_eigenfun(sign=sign, k=k) for i,k in enumerate(ks)])
 
     @staticmethod
     def get_omega(sign: int, k: float, alpha: float):
@@ -228,6 +285,8 @@ class SimpleQW(ChainQW):
         return np.exp(1j*(omega-k))-alpha*np.exp(1j*k)
     
     def _generate_S(self, sign: int, k: float, gp = float, gm = float):
+        """Generate matrix mapping c (weights for x<0) to cp (weights for x>0). This is a helper function for eigenfun.
+        """
         # lighten notation 
         a = self.alpha
         b = self.beta
@@ -281,10 +340,16 @@ class SimpleQW(ChainQW):
         """
         c = np.cos(phi)
         s = np.sin(phi)
-        V0 = np.array([[c, 1j*s*np.exp(-1j*gamma)],
-              [1j*s*np.exp(1j*gamma), c]])
-        Vs = L*[np.eye(2)] + [V0] + (L-1)*[np.eye(2)]
-        return block_diag(*Vs)
+        V0 = [[c, 1j*s*np.exp(-1j*gamma)],
+              [1j*s*np.exp(1j*gamma), c]]
+        # first we build the potential for H_x x H_int 
+        blocks = L*[np.eye(2)] + [V0] + (L-1)*[np.eye(2)]
+        V = block_diag(*blocks)
+        # we permute the two tensor factors
+        V = V.reshape([2*L, 2, 2*L, 2])
+        V = V.transpose([1, 0, 3, 2])
+        V = V.reshape([4*L, 4*L])
+        return V
 
     @staticmethod
     def _get_simple_W(L: int, theta: float) -> np.ndarray:

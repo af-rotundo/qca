@@ -72,11 +72,6 @@ def normalize(psi: np.ndarray) -> np.ndarray:
     else:
         raise ValueError('Vector has zero norm')
 
-def gaussian_packet(L: int, x0: int = 0, sigma: float = 1):
-    x = np.arange(-L, L)
-    psi = np.exp(-1/2*((x-x0)/sigma)**2)
-    return normalize(psi)
-
 def plane_wave(L: int, k: float) -> np.ndarray:
     """Prepare a plane wave state with momentum k over a chain of size 2L.
 
@@ -95,16 +90,6 @@ def plane_wave(L: int, k: float) -> np.ndarray:
     """
     x = np.arange(-L, L)
     psi = np.exp(-1j*k*x)
-    return normalize(psi)
-
-def localized_particle(
-        L: int, 
-        k: float, 
-        x0: int, 
-        sigma: float = 1
-    ) -> np.ndarray:
-    x = np.arange(-L, L)
-    psi = np.exp(-1j*k*x)*np.exp(-1/2*((x-x0)/sigma)**2)
     return normalize(psi)
 
 def shift(v, n):
