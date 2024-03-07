@@ -109,8 +109,7 @@ def test_free_eigenfun(execution_number):
     qw = SimpleQW(L=L, theta=theta, phi=0, gamma=0)
     # free solution from the infinite line stays solution on the circle only for some special values of k
     dk = np.pi/L
-    # we take a random momentum between 0 and pi/2
-    k = random.randint(0, int(L/2))*dk
+    k = random.randint(-L, L-1)*dk
     psi = qw.free_eigenfun(sign=1, k=k)
     qw.psi = psi
     steps = random.randint(1, STEPS_MAX)
@@ -193,3 +192,22 @@ def test_delta_V(execution_number):
     assert V[3*L, 3*L] == c
     assert V[L, 3*L] == 1j*s*np.exp(-1j*gamma)
     assert V[3*L, L] == 1j*s*np.exp(1j*gamma)
+
+def test_free_eigenfun_orthonorm():
+    # check that the free eigenfunctions are orthonormal
+    L = random.randint(2, int(L_MAX))
+    theta = 2 * np.pi * random.random()
+    phi = 2 * np.pi * random.random()
+    gamma = 2 * np.pi * random.random()
+    qw = SimpleQW(L=L, theta=theta, phi=phi, gamma=gamma)
+    dk = np.pi/L
+    k1 = random.randint(-L, L-1)*dk
+    sign = random.choice([1, -1])
+    k2 = random.randint(-L, L-1)*dk
+    psi_1 = qw.free_eigenfun(sign=sign, k=k1)
+    # different momentum same sign
+    psi_2 = qw.free_eigenfun(sign=sign, k=k2)
+    # different sign same momentum
+    psi_3 = qw.free_eigenfun(sign=-sign, k=k1)
+    assert np.abs((psi_1.T.conj() @ psi_2)) < EPS
+    assert np.abs((psi_2.T.conj() @ psi_3)) < EPS
