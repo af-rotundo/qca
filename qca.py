@@ -100,7 +100,11 @@ class ChainQW(QCA):
         if x_max == None:
             x_max = self.L
         ps = [self.p_x(x) for x in range(x_min, x_max)]
-        return plt.plot(range(x_min, x_max), ps)
+        p = plt.plot(range(x_min, x_max), ps)
+        plt.title('Position probability distribution')
+        plt.xlabel('x')
+        plt.ylabel('p(x)')
+        return p
 
 def x_to_index(x: int, L: int) -> int:
     """Convert a position x along a chain of size 2L with x=-L, ..., L-1 to the corresponding index in the vector representation of the walker state, i=0, ..., 2L-1.
