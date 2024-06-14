@@ -1,7 +1,8 @@
+from abc import ABC, abstractmethod
 import numpy as np
 
 from qca import QCA
-from util import x_to_index
+from util import x_to_index, plane_wave
 
 RESET = 10
 
@@ -48,6 +49,67 @@ class ChainQW(QCA):
         self.L = L
         self.d = d
         super().__init__(psi=psi)
+
+    def free_eigenfun(self, sign: int, k:float) -> np.ndarray:
+        """Generate a unnormalized eigenfunction of the free theory, with momentum 'k' and sign specified by 'sign'. 
+
+        The wave function is given in the basis given by the internal dof basis tensor the position basis. 
+
+        Args:
+            sign (int): specifies which band to consider 
+            k (float): momentum 
+
+        Returns:
+            np.ndarray: unnormalized wave function 
+        """
+        assert sign in [-1,1], 'sign should be 1 or -1.'
+        v_int = self._get_v_int(sign, k)
+        return np.kron(v_int, plane_wave(self.L, k=k))
+    
+    @abstractmethod
+    def _get_v_int(self, sign: int, k: float) -> np.ndarray:
+        """Compute the internal part of the free theory eigenfunction. 
+
+        Args:
+            sign (int): specifies which band to consider 
+            k (float): momentum 
+
+        Returns:
+            np.ndarary: internal part of the free theory eigenfunction
+        """
+        pass
+    
+    def wave_packet(
+            self, 
+            k0: float, 
+            sigma_k: float, 
+            x0: float, 
+            sign: int
+        ) -> np.ndarray:
+        """Generate a wave packet center at x0, and momentum normally distributed around k0 with std deviation equal to sigma_k.
+
+        The packet is
+
+            |packet> = sum_k g(k) |v_k>
+
+        where |v_k> are eigenfunctions of the free theory, and 
+
+            g(k) = exp(-(k-k0)^2/(2*sigma_k^2)) exp(ix0k)
+
+        The momenta are sampled from [-pi, pi) with a grid of spacing pi/L.
+
+        Args:
+            k0 (float): mean momentum of the packet
+            sigma_k (float): std deviation of momentum
+            x0 (float): mean position
+            sign (int): label bands in the free theory
+
+        Returns:
+            np.ndarray: unnormalized wave packet
+        """
+        ks = np.arange(-self.L, self.L-1)*np.pi/self.L
+        weights = np.exp(-(ks-k0)**2/(2*sigma_k**2)) * np.exp(1j*x0*ks)
+        return sum([weights[i] * self.free_eigenfun(sign=sign, k=k) for i,k in enumerate(ks)])
 
     def p_x(self, x: int) -> float:
         """Compute the probability that the walker is found at position x. 

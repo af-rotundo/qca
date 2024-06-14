@@ -11,6 +11,8 @@ L_MAX = 20
 STEPS_MAX = 10
 EPS = 1e-9
 
+ChainQW.__abstractmethods__=set()
+
 @pytest.mark.parametrize("execution_number", range(N_RAND)) 
 def test_p_x(execution_number):
     # check that position probabilities add up to 1
