@@ -3,9 +3,8 @@ import numpy as np
 import random
 from scipy.stats import unitary_group
 
-from one_particle import *
 from simple_qw import *
-from util import x_to_index
+from util import *
 
 N_RAND = 5
 L_MAX = 20

@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 import random
 
-from one_particle import *
+from util import *
 from delta_simple_qw import *
 from util import x_to_index
 

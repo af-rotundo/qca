@@ -1,9 +1,7 @@
 import numpy as np
-from scipy.linalg import block_diag
-from matplotlib import pyplot as plt
 
 from chain_qw import ChainQW
-from one_particle import plane_wave, normalize, get_translation, get_W_from_blocks
+from util import plane_wave, get_translation, get_W_from_blocks
 
 class SimpleQW(ChainQW):
     def __init__(self, 

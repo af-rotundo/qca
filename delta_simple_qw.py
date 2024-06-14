@@ -2,7 +2,7 @@ import numpy as np
 
 from simple_qw import SimpleQW
 from potential_builders import get_simple_V0, get_step_V
-from one_particle import normalize
+from util import normalize
 
 class DeltaSimpleQW(SimpleQW):
     def __init__(self, 

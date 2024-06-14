@@ -1,11 +1,9 @@
 from abc import ABC, abstractmethod
 import numpy as np
-from scipy.linalg import block_diag
-from matplotlib import pyplot as plt
 
-from one_particle import plane_wave, normalize, get_translation, get_W_from_blocks
+from util import normalize
 
-RESET = 10
+RESET = 20
 
 class QCA(ABC):
     """Abstract class for quantum cellular automata (QCA).

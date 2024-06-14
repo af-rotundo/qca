@@ -4,8 +4,7 @@ import random
 from scipy.stats import unitary_group
 
 from thirring import *
-from one_particle import *
-from util import x_to_index
+from util import *
 
 np.set_printoptions(suppress=True)
 

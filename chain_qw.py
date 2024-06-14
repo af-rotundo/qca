@@ -1,9 +1,7 @@
 import numpy as np
-from scipy.linalg import block_diag
-from matplotlib import pyplot as plt
 
 from qca import QCA
-from util import x_to_index, index_to_x
+from util import x_to_index
 
 RESET = 10
 

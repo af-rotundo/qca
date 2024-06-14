@@ -2,11 +2,12 @@ import pytest
 import numpy as np
 import random
 
-from one_particle import *
+from util import *
 from simple_qw import *
 
 N_RAND = 5
 L_MAX = 20
+D_MAX = 3
 STEPS_MAX = 10
 EPS = 1e-9
 
@@ -51,12 +52,15 @@ def test_free_eigenfun(execution_number):
     theta = 2 * np.pi * random.random()
     qw = SimpleQW(L=L, theta=theta)
     # free solution from the infinite line stays solution on the circle only for some special values of k
-    k = np.pi/L * random.randint(-L, L-1)
-    psi = qw.free_eigenfun(sign=1, k=k)
+    n = random.randint(-L, L-1)
+    k = np.pi/L * n
+    psi = normalize(qw.free_eigenfun(sign=1, k=k))
     qw.psi = psi
     steps = random.randint(1, STEPS_MAX)
     qw.evolve(steps)
     w = qw.get_omega(sign=1, k=k, alpha=qw.alpha)
+    print('distance', np.linalg.norm(qw.psi-np.exp(1j*w*steps)*psi))
+    print(f'L = {L}, theta = {theta}, n = {n}, steps = {steps}')
     assert np.allclose(qw.psi, np.exp(1j*w*steps)*psi)   
 
 def test_free_eigenfun_orthonorm():

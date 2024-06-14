@@ -5,10 +5,7 @@ from sympy.combinatorics.permutations import Permutation
 import itertools
 
 from qca import QCA
-from one_particle import get_translation, get_W_from_blocks, plane_wave
-from util import shuffle
-
-
+from util import get_translation, get_W_from_blocks, plane_wave, shuffle
 
 EPS = 1e-9
 
