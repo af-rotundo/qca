@@ -14,6 +14,17 @@ STEPS_MAX = 10
 EPS = 1e-9
 
 @pytest.mark.parametrize("execution_number", range(N_RAND))
+def test_shift(execution_number):
+    L = random.randint(1, L_MAX)
+    print('L', L)
+    v = np.random.rand(L)
+    print(v)
+    s = random.randint(-STEPS_MAX,STEPS_MAX)
+    vp = shift(v, s)
+    vc = np.array([v[(i-s)%L] for i in range(L)])
+    assert np.allclose(vp, vc)
+
+@pytest.mark.parametrize("execution_number", range(N_RAND))
 def test_shuffle_1(execution_number):
     d = random.randint(2, 4)
     U1 = unitary_group(d).rvs()

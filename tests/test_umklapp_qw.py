@@ -3,7 +3,7 @@ import numpy as np
 import random
 
 from util import *
-from simple_qw import *
+from umklapp_qw import *
 
 N_RAND = 5
 L_MAX = 20
@@ -14,32 +14,20 @@ EPS = 1e-9
 @pytest.mark.parametrize("execution_number", range(N_RAND)) 
 def test_get_W(execution_number):
     L = random.randint(1, L_MAX)
-    theta = 2*np.pi*random.random()
     T1 = get_translation(L=L, k=1)
     T2 = get_translation(L=L, k=2)
-    alpha = np.cos(theta)
-    beta = np.sin(theta)
+    Id = np.eye(2*L)
     W_corr = np.block(
-        [[alpha*T2, 1j*beta*T1],
-         [1j*beta*T1.T, alpha*T2.T]
+        [[(T2-Id)/2, 1j/2*(T1+T1.T)],
+         [1j/2*(T1+T1.T), (T2.T-Id)/2]
         ])
-    W = SimpleQW._get_W(L, theta)
+    W = UmklappQW._get_W(L)
     assert np.allclose(W, W_corr)
-
-@pytest.mark.parametrize("execution_number", range(N_RAND))
-def test_get_gp(execution_number):
-    k = np.pi/2*random.random()
-    alpha = random.random() 
-    sign = random.choice([1, -1])
-    gp1 = SimpleQW.get_gp(sign, k, alpha)
-    gp2 = SimpleQW.get_gp(sign, k+sign*np.pi, alpha)
-    assert  np.allclose(gp1, -gp2)
 
 @pytest.mark.parametrize("execution_number", range(N_RAND))
 def test_free_eigenfun(execution_number):
     L = random.randint(2, int(L_MAX))
-    theta = 2 * np.pi * random.random()
-    qw = SimpleQW(L=L, theta=theta)
+    qw = UmklappQW(L=L)
     # free solution from the infinite line stays solution on the circle only for some special values of k
     n = random.randint(-L, L-1)
     k = np.pi/L * n
@@ -47,22 +35,20 @@ def test_free_eigenfun(execution_number):
     qw.psi = psi
     steps = random.randint(1, STEPS_MAX)
     qw.evolve(steps)
-    w = qw.get_omega(sign=1, k=k, alpha=qw.alpha)
+    w = qw.get_omega(sign=1, k=k)
+    print(f'w = {w}')
     print('distance', np.linalg.norm(qw.psi-np.exp(1j*w*steps)*psi))
-    print(f'L = {L}, theta = {theta}, n = {n}, steps = {steps}')
+    print(f'L = {L}, n = {n}, k = {k}, steps = {steps}')
     assert np.allclose(qw.psi, np.exp(1j*w*steps)*psi)   
 
 def test_free_eigenfun_orthonorm():
     # check that the free eigenfunctions are orthonormal
     L = random.randint(2, int(L_MAX))
-    theta = 2 * np.pi * random.random()
-    qw = SimpleQW(L=L, theta=theta)
+    qw = UmklappQW(L=L)
     dk = np.pi/L
     k1 = random.randint(-L, L-1)*dk
     sign = random.choice([1, -1])
-    k2 = k1 
-    while k2 == k1:
-        k2 = random.randint(-L, L-1)*dk
+    k2 = random.randint(-L, L-1)*dk
     psi_1 = qw.free_eigenfun(sign=sign, k=k1)
     # different momentum same sign
     psi_2 = qw.free_eigenfun(sign=sign, k=k2)

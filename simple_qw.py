@@ -15,7 +15,7 @@ class SimpleQW(ChainQW):
             W = [[alpha T^2, i*beta*T, 
                  [i*betaT^{-1}, alpha T^{-2}]]
 
-        where T is the translation operator, alpha = cos(theta), and beta = sin(theta). The potential interaction should be diagonal, but it's otherwise unspecified.
+        where T is the translation operator, alpha = cos(theta), and beta = sin(theta). The potential interaction should be provided by the user.
 
     Args:
         L (int): the chain has size 2L.
@@ -23,7 +23,7 @@ class SimpleQW(ChainQW):
         V (np.ndarray | None, optional): diagonal potential. Defaults to None.
         psi (np.ndarray | None): state of the walker. Defaults to None. 
         """
-        W = SimpleQW._get_simple_W(L=L, theta=theta)
+        W = SimpleQW._get_W(L=L, theta=theta)
         super().__init__(L=L, W=W, V=V, V_diagonal=False, d=2, psi=psi)
         self.alpha = np.cos(theta)
         self.beta = np.sin(theta)
@@ -76,7 +76,7 @@ class SimpleQW(ChainQW):
         return v_int
 
     @staticmethod
-    def _get_simple_W(L: int, theta: float) -> np.ndarray:
+    def _get_W(L: int, theta: float) -> np.ndarray:
         """Generate a one-particle walk unitary of the form 
 
             W = [[alpha T^2, i*beta*T, 
