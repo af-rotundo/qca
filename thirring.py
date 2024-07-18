@@ -24,7 +24,10 @@ class Thirring(QCA):
         self.L = L
         self.theta = theta
         self.W1 = Thirring._get_one_particle_W(L, theta)
-        self.V = Thirring._get_V(L, n_particles, chi, sigma_V)
+        if n_particles == 1:
+            self.V = None
+        else:
+            self.V = Thirring._get_V(L, n_particles, chi, sigma_V)
         super().__init__(psi)
     
     def in_state(
@@ -190,7 +193,8 @@ class Thirring(QCA):
 
     def _evolve(self):
         # apply V (since this is a diagonal matrix we can use vector multiplication)
-        self.psi = self.V * self.psi
+        if self.V != None:
+            self.psi = self.V * self.psi
         # apply W1 x W1 x ... x W1 
         self.psi = shuffle(self.psi, self.W1, self.n_particles)
     

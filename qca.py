@@ -21,6 +21,7 @@ class QCA(ABC):
             self._counter += 1
             # increase numerical stability
             if self._counter == RESET:
+                print('boom', self._counter)
                 self.psi = normalize(self.psi)
                 self._counter = 0
             self._evolve()
