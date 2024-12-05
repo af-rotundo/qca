@@ -66,26 +66,26 @@ def get_step_V(L:int, V0: np.array, a: int, b: int) -> np.ndarray:
     return V
 
 @staticmethod
-def get_smeared_V(L:int, phi: float, gamma: float, sigma_V: float) -> np.ndarray:
-    """Generate unitary for a potential, which rotates the internal dof with 
+def get_smeared_V(L:int, get_V: callable, phi: float, sigma_V: float) -> np.ndarray:
+    """Generate a unitary for a potential, which rotates the internal dof with 
         
-        V0 = [[c,    i*s*e^{-i*gamma}], 
-                [i*s*e^{i*gamma},  c]]
-    
-    for x=0, where c = cos(phi), s = sin(phi). Away from x=0 the interaction is smoothly turned of with a Gaussian envelope with standared 
-    deviation equal to sigma_V. In practice we take phi(x) to be a Gaussian centered at x=0.
+        V = sum_x V(x) |x> <x|
+        V(x) = get_V[phi*exp{x^2/(2*sigma_V**2)}],
+
+    it is assumed that get_V(0)=Id.
 
     Args:
         L (int): the chain has size 2L
-        phi (float): sets relative weight of diagonal and off-diagonal terms in V through c = cos(phi), s = sin(phi)
-        gamma: phase
+        V (callable): function generating a matrix for the local potential
+        phi: parametrise the strength of the interaction
         sigma_V(float): standard deviation of Gaussian envelope
 
     Returns:
         ndarray: potential matrix
     """
     # first we build the potential for H_x x H_int 
-    blocks = [get_simple_V0(phi=phi*np.exp(-x**2/(2*sigma_V**2)), gamma=gamma) for x in np.arange(-L, L)] 
+    blocks = [get_V(phi*np.exp(-x**2/(2*sigma_V**2))) 
+              for x in np.arange(-L, L)] 
     V = block_diag(*blocks)
     # we permute the two tensor factors
     V = V.reshape([2*L, 2, 2*L, 2])
