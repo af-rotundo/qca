@@ -11,10 +11,10 @@ class Exp2(ChainQW):
             V: np.ndarray | None = None,
             psi: np.ndarray | None = None
         ):
-        """Generate a quantum walker on a circle with internal dof of dimension 2. The walker unitary is given by 
+        """Generate a quantum walker on a circle with internal dof of dimension 2. The walker unitary is given by W^nw where
 
-            W = [[c^2*T^{-2} - s^2, i*s*c*(T+T^{-1}), 
-                 [i*(T+T^{-1}), c^2*T^2 - s^2]]
+            W1 = [[c T^*, -is],
+                  [-is, c T]]
 
         where T is the translation operator. The potential interaction should be provided by the user.
 
