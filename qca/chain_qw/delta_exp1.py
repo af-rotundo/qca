@@ -1,10 +1,10 @@
 import numpy as np
 
-from qca.chain_qw.simple_qw import SimpleQW
+from qca.chain_qw.exp1 import Exp1
 from qca.util.potential_builders import get_simple_V0, get_step_V
 from qca.util.util import normalize
 
-class DeltaSimpleQW(SimpleQW):
+class DeltaExp1(Exp1):
     def __init__(self, 
             L: int, 
             theta: float, 
@@ -12,7 +12,7 @@ class DeltaSimpleQW(SimpleQW):
             gamma: float, 
             psi: np.ndarray | None = None
         ):
-        """SimpleQW with potential localized at x=0 acting on the the internal dof as 
+        """Exp1 with potential localized at x=0 acting on the the internal dof as 
     
             V = [[c,    i*s*e^{-i*gamma}], 
                  [i*s*e^{i*gamma},  c]]
@@ -48,8 +48,8 @@ class DeltaSimpleQW(SimpleQW):
         Returns:
             _type_: unnormalized interacting eigenfunction
         """
-        gp = SimpleQW.get_gp(sign, k, self.alpha)
-        gm = SimpleQW.get_gp(sign, -k, self.alpha)
+        gp = Exp1.get_gp(sign, k, self.alpha)
+        gm = Exp1.get_gp(sign, -k, self.alpha)
         S = self._generate_S(sign, k, gp, gm)
         cp = S @ c
         xL = np.arange(-self.L, 1)

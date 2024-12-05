@@ -3,7 +3,7 @@ import numpy as np
 from qca.chain_qw.chain_qw import ChainQW
 from qca.util.util import get_translation, get_W_from_blocks
 
-class SimpleQW2(ChainQW):
+class Exp2(ChainQW):
     def __init__(self, 
             L: int, 
             theta: float,
@@ -24,7 +24,7 @@ class SimpleQW2(ChainQW):
         V (np.ndarray | None, optional): diagonal potential. Defaults to None.
         psi (np.ndarray | None): state of the walker. Defaults to None. 
         """
-        W = SimpleQW2._get_one_particle_W(L=L, theta=theta)
+        W = Exp2._get_one_particle_W(L=L, theta=theta)
         super().__init__(L=L, W=W, V=V, V_diagonal=False, d=2, psi=psi)
         self.theta = theta
         self.nw = nw
@@ -49,7 +49,7 @@ class SimpleQW2(ChainQW):
         c = np.cos(self.theta)
         s = np.sin(self.theta)
         if s != 0:
-            v_int = np.array([1, SimpleQW2._get_gp(sign, k, c, s)])
+            v_int = np.array([1, Exp2._get_gp(sign, k, c, s)])
         else:
             raise ValueError('not implemented yet')
         return v_int
@@ -87,35 +87,4 @@ class SimpleQW2(ChainQW):
             (0,1): -1j*s*np.eye(2*L), 
             (1,0): -1j*s*np.eye(2*L), 
             (1,1): c*T.T}
-        return get_W_from_blocks(d=2, blocks=blocks)
-
-    @staticmethod
-    def _get_W(L: int, theta: float) -> np.ndarray:
-        """Generate a one-particle walk unitary of the form 
-
-           W = [[c^2 * T^{-2} - s^2, i*s*c*(T+T^{-1}), 
-                [i*(T+T^{-1}), c^2 * T^2 - s^2]]
-
-            where T is the translation operator, and c = cos(theta) and 
-            s = sin(theta).
-
-        Args:
-            theta (float): parameter of evolution
-            L (int): the chain has size 2L
-        
-        Returns:
-            np.ndarray: walk unitary
-        """
-        c = np.cos(theta)
-        s = np.sin(theta)
-        # need to change convention for definition of translation
-        T1 = get_translation(L=L, k=-1)
-        T2 = get_translation(L=L, k=-2)
-        Id = np.eye(2*L)
-        blocks = {
-            (0,0): c**2 * T2.T - s**2*Id, 
-            (0,1): -1j * s * c * (T1+T1.T), 
-            (1,0): -1j * s * c * (T1+T1.T), 
-            (1,1): c**2 * T2 - s**2 * Id
-        }
         return get_W_from_blocks(d=2, blocks=blocks)

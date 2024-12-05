@@ -3,7 +3,7 @@ import numpy as np
 import random
 
 from qca.util.util import *
-from qca.chain_qw.simple_qw import *
+from qca.chain_qw.exp1 import *
 
 N_RAND = 5
 L_MAX = 20
@@ -23,7 +23,7 @@ def test_get_W(execution_number):
         [[alpha*T2, 1j*beta*T1],
          [1j*beta*T1.T, alpha*T2.T]
         ])
-    W = SimpleQW._get_W(L, theta)
+    W = Exp1._get_W(L, theta)
     assert np.allclose(W, W_corr)
 
 @pytest.mark.parametrize("execution_number", range(N_RAND))
@@ -31,15 +31,15 @@ def test_get_gp(execution_number):
     k = np.pi/2*random.random()
     alpha = random.random() 
     sign = random.choice([1, -1])
-    gp1 = SimpleQW.get_gp(sign, k, alpha)
-    gp2 = SimpleQW.get_gp(sign, k+sign*np.pi, alpha)
+    gp1 = Exp1.get_gp(sign, k, alpha)
+    gp2 = Exp1.get_gp(sign, k+sign*np.pi, alpha)
     assert  np.allclose(gp1, -gp2)
 
 @pytest.mark.parametrize("execution_number", range(N_RAND))
 def test_free_eigenfun(execution_number):
     L = random.randint(2, int(L_MAX))
     theta = 2 * np.pi * random.random()
-    qw = SimpleQW(L=L, theta=theta)
+    qw = Exp1(L=L, theta=theta)
     # free solution from the infinite line stays solution on the circle only for some special values of k
     n = random.randint(-L, L-1)
     k = np.pi/L * n
@@ -56,7 +56,7 @@ def test_free_eigenfun_orthonorm():
     # check that the free eigenfunctions are orthonormal
     L = random.randint(2, int(L_MAX))
     theta = 2 * np.pi * random.random()
-    qw = SimpleQW(L=L, theta=theta)
+    qw = Exp1(L=L, theta=theta)
     dk = np.pi/L
     k1 = random.randint(-L, L-1)*dk
     sign = random.choice([1, -1])

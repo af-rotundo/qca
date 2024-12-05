@@ -3,7 +3,7 @@ import numpy as np
 import random
 
 from qca.util.util import *
-from qca.chain_qw.delta_simple_qw import *
+from qca.chain_qw.delta_exp1 import *
 from qca.util.util import x_to_index
 
 N_RAND = 5
@@ -13,13 +13,13 @@ EPS = 1e-9
 
 @pytest.mark.parametrize("execution_number", range(N_RAND))
 def test_eigenfun(execution_number):
-    # we test that eigenfun from SimpleQW solves the recursion relations 
+    # we test that eigenfun from Exp1 solves the recursion relations 
     # consider a random instance of the problem 
     L = 2*random.randint(2, int(L_MAX/2))
     phi = 2 * np.pi * random.random()
     theta = 2 * np.pi * random.random()
     gamma = 2 * np.pi * random.random()
-    qw = DeltaSimpleQW(L=L, theta=theta, phi=phi, gamma=gamma)
+    qw = DeltaExp1(L=L, theta=theta, phi=phi, gamma=gamma)
     # first we consider the free theory (without V)
     # we build a generic eigenstate with energy omega in [0, pi]
     k = np.pi*random.random()/2
@@ -30,7 +30,7 @@ def test_eigenfun(execution_number):
     beta = np.sin(theta)
     c = np.cos(phi)
     s = np.sin(phi)
-    omega = SimpleQW.get_omega(sign=1, k=k, alpha=alpha)
+    omega = Exp1.get_omega(sign=1, k=k, alpha=alpha)
     psi_plus = qw.psi[:2*L]
     psi_minus = qw.psi[2*L:]
     for x in range(-L+2, L):

@@ -3,7 +3,7 @@ import numpy as np
 from qca.chain_qw.chain_qw import ChainQW
 from qca.util.util import get_translation, get_W_from_blocks
 
-class SimpleQW(ChainQW):
+class Exp1(ChainQW):
     def __init__(self, 
             L: int, 
             theta: float, 
@@ -23,7 +23,7 @@ class SimpleQW(ChainQW):
         V (np.ndarray | None, optional): diagonal potential. Defaults to None.
         psi (np.ndarray | None): state of the walker. Defaults to None. 
         """
-        W = SimpleQW._get_W(L=L, theta=theta)
+        W = Exp1._get_W(L=L, theta=theta)
         super().__init__(L=L, W=W, V=V, V_diagonal=False, d=2, psi=psi)
         self.alpha = np.cos(theta)
         self.beta = np.sin(theta)
@@ -44,7 +44,7 @@ class SimpleQW(ChainQW):
         
         Depending on the value of 'sign', either omega_+ or omega_- is computed.  
         """
-        omega = SimpleQW.get_omega(sign, k, alpha)
+        omega = Exp1.get_omega(sign, k, alpha)
         return np.exp(1j*(omega-k))-alpha*np.exp(1j*k)
     
     def _get_v_int(self, sign: int, k: float) -> np.ndarray:
@@ -58,7 +58,7 @@ class SimpleQW(ChainQW):
             np.ndarary: internal part of the free theory eigenfunction
         """
         if self.beta != 0:
-            v_int = np.array([1j*self.beta, SimpleQW.get_gp(sign, k, self.alpha)])
+            v_int = np.array([1j*self.beta, Exp1.get_gp(sign, k, self.alpha)])
         # the case beta = 0 needs to be taken care separately 
         else:
             if sign == 1:
