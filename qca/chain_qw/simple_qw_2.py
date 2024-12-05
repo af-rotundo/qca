@@ -1,6 +1,6 @@
 import numpy as np
 
-from qca.chain_qw import ChainQW
+from qca.chain_qw.chain_qw import ChainQW
 from qca.util.util import get_translation, get_W_from_blocks
 
 class SimpleQW2(ChainQW):
