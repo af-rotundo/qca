@@ -2,8 +2,8 @@ import pytest
 import numpy as np
 import random
 
-from util import *
-from umklapp_qw import *
+from qca.util.util import *
+from qca.chain_qw.umklapp_qw import *
 
 N_RAND = 5
 L_MAX = 20

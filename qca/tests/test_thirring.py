@@ -3,8 +3,8 @@ import numpy as np
 import random
 from scipy.stats import unitary_group
 
-from thirring import *
-from util import *
+from qca.chain_qw.thirring import *
+from qca.util.util import *
 
 np.set_printoptions(suppress=True)
 
@@ -48,7 +48,7 @@ def test_one_particle_free_eigenfun(execution_number):
     # free solution from the infinite line stays solution on the circle only for some special values of k
     dk = np.pi/L
     k = random.randint(-L, L-1)*dk
-    sign = random.choice([-1, -1])
+    sign = random.choice([1, -1])
     psi_i = qca.one_particle_free_eigenfun(sign, k)
     psi_i = psi_i/np.linalg.norm(psi_i)
     # check that psi_i is an eigenfunction of U with right eigenvalue
@@ -56,6 +56,35 @@ def test_one_particle_free_eigenfun(execution_number):
     omega = np.arccos(np.cos(theta) * np.cos(k))
     psi_f_correct = np.exp(sign*1j*omega) * psi_i
     assert np.allclose(psi_f, psi_f_correct)
+
+@pytest.mark.parametrize("execution_number", range(N_RAND))
+def test_two_particle_free_eigenfun(execution_number):
+    L = random.randint(3, L_MAX)
+    n_steps = random.randint(1, N_RAND)
+    n = 2
+    theta = np.pi/4 * random.random()
+    chi = 0
+    qca = Thirring(L, n, theta, chi)
+    # free solution from the infinite line stays solution on the circle only for some special values of k
+    dk = np.pi/L
+    k = 0
+    L_min = int(L/2)
+    while k == 0:
+        k = random.randint(-L_min, L_min)*dk
+    sign = random.choice([1, -1])
+    psi_i_1 = qca.one_particle_free_eigenfun(sign, k)
+    psi_i_2 = qca.one_particle_free_eigenfun(-sign, -k)
+    psi_i = np.kron(psi_i_1, psi_i_2)
+    psi_i = Thirring._anti_symmetrize(psi_i, n, 4*L)/np.linalg.norm(psi_i)
+    qca.psi = psi_i.copy()
+    # check that psi_i is an eigenfunction of U with right eigenvalue
+    qca.evolve(n_steps)
+    assert np.allclose(qca.psi, psi_i)
+    qca = Thirring(L=L, n_particles=n, theta=theta, chi=chi)
+    psi_i = qca.in_state([k,-k], [-L/2, L/2], [0.1, 0.1], [sign,-sign])
+    qca.psi = psi_i.copy()
+    qca.evolve(n_steps)
+    assert np.allclose(qca.psi, psi_i), np.linalg.norm(qca.psi-psi_i)
 
 @pytest.mark.parametrize("execution_number", range(N_RAND))
 def test_get_contact_V(execution_number):

@@ -1,8 +1,8 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 import numpy as np
 
-from qca import QCA
-from util import x_to_index, plane_wave
+from qca.qca import QCA
+from qca.util.util import x_to_index, plane_wave
 
 RESET = 10
 

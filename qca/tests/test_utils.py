@@ -3,7 +3,7 @@ import numpy as np
 import random
 from scipy.stats import unitary_group
 
-from util import *
+from qca.util.util import *
 
 np.set_printoptions(suppress=True)
 

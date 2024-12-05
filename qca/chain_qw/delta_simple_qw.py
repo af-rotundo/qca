@@ -1,8 +1,8 @@
 import numpy as np
 
-from simple_qw import SimpleQW
-from potential_builders import get_simple_V0, get_step_V
-from util import normalize
+from qca.chain_qw.simple_qw import SimpleQW
+from qca.util.potential_builders import get_simple_V0, get_step_V
+from qca.util.util import normalize
 
 class DeltaSimpleQW(SimpleQW):
     def __init__(self, 

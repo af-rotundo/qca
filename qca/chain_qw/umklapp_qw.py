@@ -1,7 +1,7 @@
 import numpy as np
 
-from chain_qw import ChainQW
-from util import get_translation, get_W_from_blocks
+from qca.chain_qw.chain_qw import ChainQW
+from qca.util.util import get_translation, get_W_from_blocks
 
 class UmklappQW(ChainQW):
     def __init__(self, 

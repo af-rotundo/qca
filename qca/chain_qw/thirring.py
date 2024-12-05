@@ -4,8 +4,8 @@ from sympy.utilities.iterables import permutations
 from sympy.combinatorics.permutations import Permutation
 import itertools
 
-from qca import QCA
-from util import get_translation, get_W_from_blocks, plane_wave, shuffle
+from qca.qca import QCA
+from qca.util.util import get_translation, get_W_from_blocks, plane_wave, shuffle
 
 EPS = 1e-9
 
@@ -60,7 +60,9 @@ class Thirring(QCA):
         in_state = 1
         for packet in packets:
             in_state = np.kron(in_state, packet)
-        in_state_A = Thirring._anti_symmetrize(in_state, self.n_particles,4*self.L)
+        in_state_A = in_state
+        #in_state_A = Thirring._anti_symmetrize(in_state, self.n_particles,4*self.L)
+        assert np.linalg.norm(in_state_A) != 0
         return in_state_A/np.linalg.norm(in_state_A)
 
     def one_particle_packet(
@@ -193,7 +195,7 @@ class Thirring(QCA):
 
     def _evolve(self):
         # apply V (since this is a diagonal matrix we can use vector multiplication)
-        if self.V != None:
+        if self.V is not None:
             self.psi = self.V * self.psi
         # apply W1 x W1 x ... x W1 
         self.psi = shuffle(self.psi, self.W1, self.n_particles)

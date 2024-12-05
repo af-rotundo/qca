@@ -3,8 +3,8 @@ import numpy as np
 import random
 from scipy.stats import unitary_group
 
-from potential_builders import *
-from util import *
+from qca.util.potential_builders import *
+from qca.util.util import *
 
 N_RAND = 5
 L_MAX = 20

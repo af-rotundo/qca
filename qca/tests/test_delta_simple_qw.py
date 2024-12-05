@@ -2,9 +2,9 @@ import pytest
 import numpy as np
 import random
 
-from util import *
-from delta_simple_qw import *
-from util import x_to_index
+from qca.util.util import *
+from qca.chain_qw.delta_simple_qw import *
+from qca.util.util import x_to_index
 
 N_RAND = 5
 L_MAX = 20

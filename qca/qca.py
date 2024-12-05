@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import numpy as np
 
-from util import normalize
+from qca.util.util import normalize
 
 RESET = 20
 
@@ -21,7 +21,6 @@ class QCA(ABC):
             self._counter += 1
             # increase numerical stability
             if self._counter == RESET:
-                print('boom', self._counter)
                 self.psi = normalize(self.psi)
                 self._counter = 0
             self._evolve()
